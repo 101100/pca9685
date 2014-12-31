@@ -1,0 +1,39 @@
+{
+  "name": "pca9685",
+  "version": "0.9.0",
+  "homepage": "https://github.com/101100/pca9685",
+  "description": "PCA9685 I2C 16-channel PWM/servo driver module",
+  "author": {
+    "name": "Jason Heard",
+    "email": "jasonpheard@gmail.com"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/101100/pca9685/blob/master/LICENSE"
+    }
+  ],
+  "main": "index.js",
+  "keywords": [
+    "pca9685",
+    "i2c",
+    "pwm",
+    "servo",
+    "adafruit",
+    "raspberrypi",
+    "beaglebone"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/101100/pca9685"
+  },
+  "bugs": {
+    "url": "https://github.com/101100/pca9685/issues"
+  },
+  "devDependencies": {
+    "i2c": "0.1.6"
+  },
+  "engines": {
+    "node": ">= 0.10.0"
+  }
+}
