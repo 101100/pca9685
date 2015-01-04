@@ -42,13 +42,16 @@ object and pass it in to the module.
 
 - `i2c`: The object used to communicate to the PWM/servo driver.
 - `debug`: If truthy, then debug messages will be printed on the console
-           during operations.
+during operations.
 - `frequency`: The frequency to use for the PWM/servo driver.  50 is
-               standard for servos, but higher frequencies might work
-               better for driving LEDs without obvious flicker.
+standard for servos, but higher frequencies might work better for
+driving LEDs without obvious flicker.
 
 
 ## Acknowledgements
 
-This module was based on [Adafruit's Raspberry-Pi Python Code Library](https://github.com/adafruit/Adafruit-Raspberry-Pi-Python-Code.git) and [the `adafruit-i2c-pwm-driver` NPM module](https://www.npmjs.com/package/adafruit-i2c-pwm-driver).
+This module was based on
+[Adafruit's Raspberry-Pi Python Code Library](https://github.com/adafruit/Adafruit-Raspberry-Pi-Python-Code.git)
+and
+[the `adafruit-i2c-pwm-driver` NPM module](https://www.npmjs.com/package/adafruit-i2c-pwm-driver).
 
