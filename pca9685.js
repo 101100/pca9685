@@ -8,6 +8,9 @@
 
 var constants = {
     modeRegister1: 0x00, // MODE1
+    modeRegister1Default: 0x01,
+    sleepBit: 0x10,
+    restartBit: 0x80,
     modeRegister2: 0x01, // MODE2
     channel0OnStepLowByte: 0x06, // LED0_ON_L
     channel0OnStepHighByte: 0x07, // LED0_ON_H
@@ -36,9 +39,10 @@ function Pca9685Driver(options, cb) {
         console.log("Reseting PCA9685");
     }
 
-    this._send(constants.modeRegister1, 0x00);
-
+    this._send(constants.modeRegister1, constants.modeRegister1Default);
+    this._send(constants.modeRegister2, constants.modeRegister2Default);
     this.allChannelsOff();
+
     this._setFrequency(this.frequency, cb);
 }
 
@@ -49,13 +53,13 @@ function createSetFrequencyStep2(sendFunc, debug, prescale, cb) {
     return function setFrequencyStep2(err, res) {
         if (err) {
             if (debug) {
-                console.log("error", err);
+                console.log("Error reading mode (to set frequency)", err);
             }
             cb(err);
         }
 
         var oldmode = res[0],
-            newmode = (oldmode & 0x7F) | 0x10;
+            newmode = (oldmode & ~constants.restartBit) | constants.sleepBit;
 
         if (debug) {
             console.log("Setting prescale to:", prescale);
@@ -73,7 +77,7 @@ function createSetFrequencyStep2(sendFunc, debug, prescale, cb) {
                 console.log("Restarting controller");
             }
 
-            sendFunc(constants.modeRegister1, oldmode | 0x80);
+            sendFunc(constants.modeRegister1, oldmode | constants.restartBit);
 
             cb();
         }, 10);
@@ -101,7 +105,7 @@ Pca9685Driver.prototype._send = function sendCommand(cmd, values) {
 
     this.i2c.writeBytes(cmd, values, function (err) {
         if (err) {
-            console.log("Error writing to I2C", err);
+            console.log("Error writing to PCA8685 via I2C", err);
         }
     });
 };
