@@ -27,11 +27,11 @@ pwm = new Pca9685Driver(options, function() {
 // Set channel 0 to turn on on step 42 and off on step 255
 pwm.setPulseRange(0, 42, 255);
 
-// Set the pulse length to 1500 microseconds
-pwm.setPulseLength(0, 1500);
+// Set the pulse length to 1500 microseconds for channel 2
+pwm.setPulseLength(2, 1500);
 
-// Set the duty cycle to 25%
-pwm.setDutyCycle(0, 0.25);
+// Set the duty cycle to 25% for channel 8
+pwm.setDutyCycle(8, 0.25);
 ```
 
 Note that you need to construct the [`i2c`](https://npmjs.org/package/i2c)
