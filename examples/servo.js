@@ -4,11 +4,12 @@ var Pca9685Driver = require("../pca9685"),
     I2C = require("i2c"),
     options = {
         i2c: new I2C(0x40, {device: "/dev/i2c-1"}),
-        frequency: 100,
+        frequency: 50,
         debug: true
     },
     pwm,
-    // pulse lengths in microseconds (theoretically, 1.5 ms is the middle of the servo's range)
+    // pulse lengths in microseconds (theoretically, 1.5 ms
+    // is the middle of the servo's range)
     pulseLengths = [ 1200, 1500, 1700 ],
     nextPulse = 0,
     timer,
