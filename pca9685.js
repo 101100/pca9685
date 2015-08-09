@@ -12,6 +12,7 @@ var constants = {
     sleepBit: 0x10,
     restartBit: 0x80,
     modeRegister2: 0x01, // MODE2
+    modeRegister2Default: 0x04,
     channel0OnStepLowByte: 0x06, // LED0_ON_L
     channel0OnStepHighByte: 0x07, // LED0_ON_H
     channel0OffStepLowByte: 0x08, // LED0_OFF_L
