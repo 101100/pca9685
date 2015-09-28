@@ -34,14 +34,14 @@ function Pca9685Driver(options, cb) {
     var cycleLengthMicroSeconds = 1000000 / options.frequency;
     this.stepLengthMicroSeconds = cycleLengthMicroSeconds / constants.stepsPerCycle;
 
-    this._send = this._send.bind(this);
+    this._sendByte = this._sendByte.bind(this);
 
     if (this.debug) {
         console.log("Reseting PCA9685");
     }
 
-    this._send(constants.modeRegister1, constants.modeRegister1Default);
-    this._send(constants.modeRegister2, constants.modeRegister2Default);
+    this._sendByte(constants.modeRegister1, constants.modeRegister1Default);
+    this._sendByte(constants.modeRegister2, constants.modeRegister2Default);
     this.allChannelsOff();
 
     this._setFrequency(this.frequency, cb);
@@ -95,16 +95,18 @@ Pca9685Driver.prototype._setFrequency = function setPwmFrequency(freq, cb) {
         console.log("Pre-scale value:", prescale);
     }
 
-    this.i2c.readBytes(constants.modeRegister1, 1, createSetFrequencyStep2(this._send, this.debug, prescale, cb));
+    this.i2c.readBytes(constants.modeRegister1, 1, createSetFrequencyStep2(this._sendByte, this.debug, prescale, cb));
 };
 
 
-Pca9685Driver.prototype._send = function sendCommand(cmd, values) {
-    if (!Array.isArray(values)) {
-        values = [values];
-    }
+Pca9685Driver.prototype._sendByte = function sendCommand(cmd, byte) {
+    var byteBuffer = new Buffer(1);
 
-    this.i2c.writeBytes(cmd, values, function (err) {
+    byteBuffer[0] = byte;
+
+    this.i2c.writeBytes(cmd, byteBuffer, function (err) {
+        // try to explicitly clean up buffer
+        byteBuffer = null;
         if (err) {
             console.log("Error writing to PCA8685 via I2C", err);
         }
@@ -117,10 +119,10 @@ Pca9685Driver.prototype.setPulseRange = function setPwmRange(channel, onStep, of
         console.log("Setting PWM channel, channel:", channel, "onStep:", onStep, "offStep:", offStep);
     }
 
-    this._send(constants.channel0OnStepLowByte + constants.registersPerChannel * channel, onStep & 0xFF);
-    this._send(constants.channel0OnStepHighByte + constants.registersPerChannel * channel, (onStep >> 8) & 0x0F);
-    this._send(constants.channel0OffStepLowByte + constants.registersPerChannel * channel, offStep & 0xFF);
-    this._send(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, (offStep >> 8) & 0x0F);
+    this._sendByte(constants.channel0OnStepLowByte + constants.registersPerChannel * channel, onStep & 0xFF);
+    this._sendByte(constants.channel0OnStepHighByte + constants.registersPerChannel * channel, (onStep >> 8) & 0x0F);
+    this._sendByte(constants.channel0OffStepLowByte + constants.registersPerChannel * channel, offStep & 0xFF);
+    this._sendByte(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, (offStep >> 8) & 0x0F);
 };
 
 
@@ -152,7 +154,7 @@ Pca9685Driver.prototype.setDutyCycle = function setPwmPulseLength(channel, dutyC
 
 Pca9685Driver.prototype.allChannelsOff = function stopAllMotors() {
     // Setting the high byte to 1 will turn off the channel
-    this._send(constants.allChannelsOffStepHighByte, 0x01);
+    this._sendByte(constants.allChannelsOffStepHighByte, 0x01);
 };
 
 
