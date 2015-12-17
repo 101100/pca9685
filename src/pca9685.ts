@@ -1,10 +1,13 @@
 /*jslint bitwise: true */
+/// <reference path = "../typings/tsd.d.ts" />
 
 // ============================================================================
 // PCA9685 I2C 16-channel PWM/servo driver
 // ============================================================================
 
 "use strict";
+
+import { I2cBus } from "i2c-bus";
 
 var constants = {
     modeRegister1: 0x00, // MODE1
@@ -27,31 +30,10 @@ var constants = {
 };
 
 
-function Pca9685Driver(options, cb) {
-    this.i2c = options.i2c;
-    this.debug = !!options.debug;
-    this.frequency = options.frequency;
-    var cycleLengthMicroSeconds = 1000000 / options.frequency;
-    this.stepLengthMicroSeconds = cycleLengthMicroSeconds / constants.stepsPerCycle;
-
-    this._send = this._send.bind(this);
-
-    if (this.debug) {
-        console.log("Reseting PCA9685");
-    }
-
-    this._send(constants.modeRegister1, constants.modeRegister1Default);
-    this._send(constants.modeRegister2, constants.modeRegister2Default);
-    this.allChannelsOff();
-
-    this._setFrequency(this.frequency, cb);
-}
-
-
-function createSetFrequencyStep2(sendFunc, debug, prescale, cb) {
+function createSetFrequencyStep2(sendFunc: (cmd: number, values: number) => void, debug: boolean, prescale: number, cb: (error?: any) => void): (err: any, byte: number) => void {
     cb = typeof cb === "function" ? cb : function () { return; };
 
-    return function setFrequencyStep2(err, res) {
+    return function setFrequencyStep2(err: any, byte: number) {
         if (err) {
             if (debug) {
                 console.log("Error reading mode (to set frequency)", err);
@@ -59,7 +41,7 @@ function createSetFrequencyStep2(sendFunc, debug, prescale, cb) {
             cb(err);
         }
 
-        var oldmode = res[0],
+        var oldmode = byte,
             newmode = (oldmode & ~constants.restartBit) | constants.sleepBit;
 
         if (debug) {
@@ -86,74 +68,110 @@ function createSetFrequencyStep2(sendFunc, debug, prescale, cb) {
 }
 
 
-Pca9685Driver.prototype._setFrequency = function setPwmFrequency(freq, cb) {
-    // 25MHz base clock, 12 bit (4096 steps per cycle)
-    var prescale = Math.round(25000000 / (constants.stepsPerCycle * freq)) - 1;
-
-    if (this.debug) {
-        console.log("Setting PWM frequency to", freq, "Hz");
-        console.log("Pre-scale value:", prescale);
-    }
-
-    this.i2c.readBytes(constants.modeRegister1, 1, createSetFrequencyStep2(this._send, this.debug, prescale, cb));
-};
+export interface Pca9685Options {
+    i2c: I2cBus,
+    address?: number,
+    debug?: boolean,
+    frequency: number
+}
 
 
-Pca9685Driver.prototype._send = function sendCommand(cmd, values) {
-    if (!Array.isArray(values)) {
-        values = [values];
-    }
+export class Pca9685Driver {
 
-    this.i2c.writeBytes(cmd, values, function (err) {
-        if (err) {
-            console.log("Error writing to PCA8685 via I2C", err);
+    constructor(options: Pca9685Options, cb: (error: any) => any) {
+        this.i2c = options.i2c;
+        this.address = options.address || 0x40; // TODO constant
+        this.debug = !!options.debug;
+        this.frequency = options.frequency || 50; // TODO constant
+        let cycleLengthMicroSeconds = 1000000 / this.frequency;
+        this.stepLengthMicroSeconds = cycleLengthMicroSeconds / constants.stepsPerCycle;
+
+        this.send = this.send.bind(this);
+
+        if (this.debug) {
+            console.log("Reseting PCA9685");
         }
-    });
-};
 
+        this.send(constants.modeRegister1, constants.modeRegister1Default);
+        this.send(constants.modeRegister2, constants.modeRegister2Default);
+        this.allChannelsOff();
 
-Pca9685Driver.prototype.setPulseRange = function setPwmRange(channel, onStep, offStep) {
-    if (this.debug) {
-        console.log("Setting PWM channel, channel:", channel, "onStep:", onStep, "offStep:", offStep);
+        this.setFrequency(this.frequency, cb);
     }
 
-    this._send(constants.channel0OnStepLowByte + constants.registersPerChannel * channel, onStep & 0xFF);
-    this._send(constants.channel0OnStepHighByte + constants.registersPerChannel * channel, (onStep >> 8) & 0x0F);
-    this._send(constants.channel0OffStepLowByte + constants.registersPerChannel * channel, offStep & 0xFF);
-    this._send(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, (offStep >> 8) & 0x0F);
-};
 
+    setPulseRange(channel: number, onStep: number, offStep: number): void {
+        if (this.debug) {
+            console.log("Setting PWM channel, channel:", channel, "onStep:", onStep, "offStep:", offStep);
+        }
 
-Pca9685Driver.prototype.setPulseLength = function setPwmPulseLength(channel, pulseLengthMicroSeconds, onStep) {
-    onStep = onStep || 0;
-
-    if (this.debug) {
-        console.log("Setting PWM channel, channel:", channel, "pulseLength:", pulseLengthMicroSeconds, "onStep:", onStep);
+        this.send(constants.channel0OnStepLowByte + constants.registersPerChannel * channel, onStep & 0xFF);
+        this.send(constants.channel0OnStepHighByte + constants.registersPerChannel * channel, (onStep >> 8) & 0x0F);
+        this.send(constants.channel0OffStepLowByte + constants.registersPerChannel * channel, offStep & 0xFF);
+        this.send(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, (offStep >> 8) & 0x0F);
     }
 
-    var offStep = (onStep + Math.round(pulseLengthMicroSeconds / this.stepLengthMicroSeconds) - 1) % constants.stepsPerCycle;
 
-    this.setPulseRange(channel, onStep, offStep);
-};
+    setPulseLength(channel: number, pulseLengthMicroSeconds: number, onStep?: number): void {
+        onStep = onStep || 0;
 
+        if (this.debug) {
+            console.log("Setting PWM channel, channel:", channel, "pulseLength:", pulseLengthMicroSeconds, "onStep:", onStep);
+        }
 
-Pca9685Driver.prototype.setDutyCycle = function setPwmPulseLength(channel, dutyCycleDecimalPercentage, onStep) {
-    onStep = onStep || 0;
+        var offStep = (onStep + Math.round(pulseLengthMicroSeconds / this.stepLengthMicroSeconds) - 1) % constants.stepsPerCycle;
 
-    if (this.debug) {
-        console.log("Setting PWM channel, channel:", channel, "dutyCycle:", dutyCycleDecimalPercentage, "onStep:", onStep);
+        this.setPulseRange(channel, onStep, offStep);
     }
 
-    var offStep = (onStep + Math.round(dutyCycleDecimalPercentage * constants.stepsPerCycle) - 1) % constants.stepsPerCycle;
 
-    this.setPulseRange(channel, onStep, offStep);
-};
+    setDutyCycle(channel: number, dutyCycleDecimalPercentage: number, onStep?: number): void {
+        onStep = onStep || 0;
+
+        if (this.debug) {
+            console.log("Setting PWM channel, channel:", channel, "dutyCycle:", dutyCycleDecimalPercentage, "onStep:", onStep);
+        }
+
+        var offStep = (onStep + Math.round(dutyCycleDecimalPercentage * constants.stepsPerCycle) - 1) % constants.stepsPerCycle;
+
+        this.setPulseRange(channel, onStep, offStep);
+    }
 
 
-Pca9685Driver.prototype.allChannelsOff = function stopAllMotors() {
-    // Setting the high byte to 1 will turn off the channel
-    this._send(constants.allChannelsOffStepHighByte, 0x01);
-};
+    allChannelsOff(): void {
+        // Setting the high byte to 1 will turn off the channel
+        this.send(constants.allChannelsOffStepHighByte, 0x01);
+    }
 
 
-module.exports = Pca9685Driver;
+    private setFrequency(freq: number, cb: (error?: any) => void) {
+        // 25MHz base clock, 12 bit (4096 steps per cycle)
+        let prescale = Math.round(25000000 / (constants.stepsPerCycle * freq)) - 1;
+
+        if (this.debug) {
+            console.log("Setting PWM frequency to", freq, "Hz");
+            console.log("Pre-scale value:", prescale);
+        }
+
+        this.i2c.readByte(this.address, constants.modeRegister1, createSetFrequencyStep2(this.send, this.debug, prescale, cb));
+    }
+
+
+    private send(cmd: number, byte: number) {
+        this.i2c.writeByte(this.address, cmd, byte, function (err?: any) {
+            if (err) {
+                console.log("Error writing to PCA8685 via I2C", err);
+            }
+        });
+    }
+
+
+    private i2c: I2cBus;
+    private address: number;
+    private debug: boolean;
+    private frequency: number;
+    private stepLengthMicroSeconds: number;
+
+}
+
+export { Pca9685Driver as default };
