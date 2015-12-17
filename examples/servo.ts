@@ -1,19 +1,29 @@
+/// <reference path="../typings/tsd.d.ts" />
+
 "use strict";
 
-var Pca9685Driver = require("../pca9685"),
-    I2C = require("i2c"),
-    options = {
-        i2c: new I2C(0x40, {device: "/dev/i2c-1"}),
-        frequency: 50,
-        debug: true
-    },
-    pwm,
-    // pulse lengths in microseconds (theoretically, 1.5 ms
-    // is the middle of the servo's range)
-    pulseLengths = [ 1200, 1500, 1700 ],
-    nextPulse = 0,
-    timer,
-    steeringChannel = 0;
+import * as i2cBus from "i2c-bus";
+
+import Pca9685Driver from "../";
+
+const options =
+{
+    i2c: i2cBus.openSync(1),
+    address: 0x40, // default value
+    frequency: 50, // default value
+    debug: true
+};
+
+// pulse lengths in microseconds (theoretically, 1.5 ms
+// is the middle of the servo's range)
+const pulseLengths: number[] = [ 1300, 1500, 1700 ];
+const steeringChannel: number = 0;
+
+
+// variables used in servoLoop
+var pwm: Pca9685Driver;
+var nextPulse: number = 0;
+var timer: NodeJS.Timer;
 
 
 // loop to cycle through pulse lengths
@@ -39,7 +49,7 @@ process.on('SIGINT', function () {
 
 
 // initialize PCA9685 and start loop once initialized
-pwm = new Pca9685Driver(options, function (err) {
+pwm = new Pca9685Driver(options, function startLoop(err: any) {
     if (err) {
         console.error("Error initializing PCA9685");
         process.exit(-1);

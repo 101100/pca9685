@@ -173,5 +173,3 @@ export class Pca9685Driver {
     private stepLengthMicroSeconds: number;
 
 }
-
-export { Pca9685Driver as default };
