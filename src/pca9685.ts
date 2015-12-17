@@ -9,7 +9,7 @@
 
 import { I2cBus } from "i2c-bus";
 
-var constants = {
+const constants = {
     modeRegister1: 0x00, // MODE1
     modeRegister1Default: 0x01,
     sleepBit: 0x10,
@@ -26,7 +26,10 @@ var constants = {
     allChannelsOffStepLowByte: 0xFC, // ALL_LED_OFF_L
     allChannelsOffStepHighByte: 0xFD, // ALL_LED_OFF_H
     preScale: 0xFE, // PRE_SCALE
-    stepsPerCycle: 4096
+    stepsPerCycle: 4096,
+    defaultAddress: 0x40,
+    defaultFrequency: 50,
+    baseClockHertz: 25000000
 };
 
 
@@ -80,10 +83,10 @@ export class Pca9685Driver {
 
     constructor(options: Pca9685Options, cb: (error: any) => any) {
         this.i2c = options.i2c;
-        this.address = options.address || 0x40; // TODO constant
+        this.address = options.address || constants.defaultAddress;
         this.debug = !!options.debug;
-        this.frequency = options.frequency || 50; // TODO constant
-        let cycleLengthMicroSeconds = 1000000 / this.frequency;
+        this.frequency = options.frequency || constants.defaultFrequency;
+        const cycleLengthMicroSeconds = 1000000 / this.frequency;
         this.stepLengthMicroSeconds = cycleLengthMicroSeconds / constants.stepsPerCycle;
 
         this.send = this.send.bind(this);
@@ -146,7 +149,7 @@ export class Pca9685Driver {
 
     private setFrequency(freq: number, cb: (error?: any) => void) {
         // 25MHz base clock, 12 bit (4096 steps per cycle)
-        let prescale = Math.round(25000000 / (constants.stepsPerCycle * freq)) - 1;
+        let prescale = Math.round(constants.baseClockHertz / (constants.stepsPerCycle * freq)) - 1;
 
         if (this.debug) {
             console.log("Setting PWM frequency to", freq, "Hz");
