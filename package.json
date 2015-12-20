@@ -30,10 +30,17 @@
   "bugs": {
     "url": "https://github.com/101100/pca9685/issues"
   },
-  "devDependencies": {
-    "i2c": "0.1.6"
+  "scripts": {
+    "prepublish": "tsc"
   },
   "engines": {
     "node": ">= 0.10.0"
+  },
+  "typescript": {
+    "definition": "index.d.ts"
+  },
+  "devDependencies": {
+    "i2c-bus": "^1.0",
+    "typescript": "^1.7"
   }
 }

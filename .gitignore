@@ -1,2 +1,7 @@
 /node_modules/
+*.log
+*.js
+
+*.d.ts
+!/typings/*.d.ts
 

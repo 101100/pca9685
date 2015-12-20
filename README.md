@@ -5,18 +5,19 @@
 This is an npm module that can interact with the PCA9685 I2C 16-channel
 PWM/servo driver.  Information on the PCA9685 can be found
 [here](http://www.nxp.com/products/lighting_driver_and_controller_ics/i2c_led_display_control/series/PCA9685.html)
-and it is available for purcahse at
+and it is available for purchase at
 [Adafruit](http://www.adafruit.com/products/815).
 
 
 ## Usage
 
 ```js
-var I2C = require("i2c");
+var i2cBus = require("i2c-bus");
 var Pca9685Driver = require("pca9685");
 
 var options = {
-    i2c: new I2C(0x40, { device: "/dev/i2c-1" }),
+    i2c: i2cBus.openSync(1),
+    address: 0x40,
     frequency: 50,
     debug: false
 };
@@ -34,18 +35,26 @@ pwm.setPulseLength(2, 1500);
 pwm.setDutyCycle(8, 0.25);
 ```
 
-Note that you need to construct the [`i2c`](https://npmjs.org/package/i2c)
-object and pass it in to the module.
+Note that you need to construct the [`i2c-bus`](https://npmjs.org/package/i2c-bus)
+object and pass it in to the module along with the I2C address of the PCA9685
+PWM/servo driver.
 
 
 ## Options
 
-- `i2c`: The object used to communicate to the PWM/servo driver.
-- `debug`: If truthy, then debug messages will be printed on the console
-during operations.
+- `i2c`: The I2cBus object used to communicate to the PWM/servo driver.
+- `address`: The I2C address of the PCA9685 PWM/servo driver.
 - `frequency`: The frequency to use for the PWM/servo driver.  50 is
 standard for servos, but higher frequencies might work better for
 driving LEDs without obvious flicker.
+- `debug`: If truthy, then debug messages will be printed on the console
+during operations.
+
+
+## Note
+
+This module is programmed in Typescript and includes typescript definitions
+for the module.
 
 
 ## Acknowledgements
