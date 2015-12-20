@@ -72,15 +72,46 @@ function createSetFrequencyStep2(sendFunc: (cmd: number, values: number) => void
 
 
 export interface Pca9685Options {
+    /**
+     * An opne I2cBus object to be used to communicate with the PCA9685
+     * driver.
+     * @type {I2cBus}
+     */
     i2c: I2cBus,
+
+    /**
+     * The I2C address of the PCA9685 driver.  If not specified, the
+     * default address of 0x40 will be used.
+     *
+     * @type {number}
+     */
     address?: number,
+
+    /**
+     * Determines if debugging messages should be printed to the console.
+     *
+     * @type {boolean}
+     */
     debug?: boolean,
+
+    /**
+     * The frequency that should be used for the PCA9685 driver.  If not
+     * specified, the default frequency of 50 Hz will be used.
+     *
+     * @type {number}
+     */
     frequency: number
 }
 
 
 export class Pca9685Driver {
 
+    /**
+     * Constructs a
+     *
+     * @param {Pca9685Options}
+     * @param {any)        => any}
+     */
     constructor(options: Pca9685Options, cb: (error: any) => any) {
         this.i2c = options.i2c;
         this.address = options.address || constants.defaultAddress;
@@ -103,6 +134,16 @@ export class Pca9685Driver {
     }
 
 
+    /**
+     * Sets the on and off steps for the given channel.
+     *
+     * @param {number} channel
+     *     Output hannel to configure.
+     * @param {number} onStep
+     *     The step number when the channel should turn on.
+     * @param {number} offStep
+     *     The step number when the channel should turn off.
+     */
     setPulseRange(channel: number, onStep: number, offStep: number): void {
         if (this.debug) {
             console.log("Setting PWM channel, channel:", channel, "onStep:", onStep, "offStep:", offStep);
@@ -115,9 +156,18 @@ export class Pca9685Driver {
     }
 
 
-    setPulseLength(channel: number, pulseLengthMicroSeconds: number, onStep?: number): void {
-        onStep = onStep || 0;
-
+    /**
+     * Sets the pulse length for the given channel.
+     *
+     * @param {number} channel
+     *     Output hannel to configure.
+     * @param {number} pulseLengthMicroSeconds
+     *     The length of the pulse for the given channel in microseconds.
+     * @param {number} onStep
+     *     Optional The step number when the channel should turn on (defaults
+     *     to 0).
+     */
+    setPulseLength(channel: number, pulseLengthMicroSeconds: number, onStep: number = 0): void {
         if (this.debug) {
             console.log("Setting PWM channel, channel:", channel, "pulseLength:", pulseLengthMicroSeconds, "onStep:", onStep);
         }
@@ -128,9 +178,18 @@ export class Pca9685Driver {
     }
 
 
-    setDutyCycle(channel: number, dutyCycleDecimalPercentage: number, onStep?: number): void {
-        onStep = onStep || 0;
-
+    /**
+     * Sets the duty cycle for the given channel.
+     *
+     * @param {number} channel
+     *     Output hannel to configure.
+     * @param {number} dutyCycleDecimalPercentage
+     *     The duty cycle for the given channel as a decimal percentage.
+     * @param {number} onStep
+     *     Optional The step number when the channel should turn on (defaults
+     *     to 0).
+     */
+    setDutyCycle(channel: number, dutyCycleDecimalPercentage: number, onStep: number = 0): void {
         if (this.debug) {
             console.log("Setting PWM channel, channel:", channel, "dutyCycle:", dutyCycleDecimalPercentage, "onStep:", onStep);
         }
@@ -141,6 +200,9 @@ export class Pca9685Driver {
     }
 
 
+    /**
+     * Turns all channels off.
+     */
     allChannelsOff(): void {
         // Setting the high byte to 1 will turn off the channel
         this.send(constants.allChannelsOffStepHighByte, 0x01);

@@ -15,7 +15,7 @@ const options =
 };
 
 // pulse lengths in microseconds (theoretically, 1.5 ms
-// is the middle of the servo's range)
+// is the middle of a typical servo's range)
 const pulseLengths: number[] = [ 1300, 1500, 1700 ];
 const steeringChannel: number = 0;
 
