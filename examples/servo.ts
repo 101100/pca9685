@@ -1,5 +1,15 @@
 /// <reference path="../typings/tsd.d.ts" />
 
+/*
+ * examples/servo.ts
+ * https://github.com/101100/pca9685
+ *
+ * Example to turn a servo motor in a loop.
+ *
+ * Copyright (c) 2015 Jason Heard
+ * Licensed under the MIT license.
+ */
+
 "use strict";
 
 import * as i2cBus from "i2c-bus";

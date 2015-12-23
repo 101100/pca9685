@@ -1,9 +1,15 @@
 /*jslint bitwise: true */
 /// <reference path = "../typings/tsd.d.ts" />
 
-// ============================================================================
-// PCA9685 I2C 16-channel PWM/servo driver
-// ============================================================================
+/*
+ * src/pca9685.ts
+ * https://github.com/101100/pca9685
+ *
+ * Library for PCA9685 I2C 16-channel PWM/servo driver.
+ *
+ * Copyright (c) 2015 Jason Heard
+ * Licensed under the MIT license.
+ */
 
 "use strict";
 
