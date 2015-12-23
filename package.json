@@ -42,5 +42,11 @@
   "devDependencies": {
     "i2c-bus": "^1.0",
     "typescript": "^1.7"
+  },
+  "dependencies": {
+    "debug": "^2.2"
+  },
+  "directories": {
+    "example": "examples"
   }
 }
