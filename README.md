@@ -13,7 +13,7 @@ and it is available for purchase at
 
 ```js
 var i2cBus = require("i2c-bus");
-var Pca9685Driver = require("pca9685");
+var Pca9685Driver = require("pca9685").Pca9685Driver;
 
 var options = {
     i2c: i2cBus.openSync(1),
@@ -51,11 +51,21 @@ driving LEDs without obvious flicker.
 during operations.
 
 
-## Note
+## Debugging
 
-This module is programmed in Typescript and includes typescript definitions
-for the module.
+This project uses the [`debug`](https://npmjs.org/package/debug) library for
+debugging.  This allows you to enable debugging using environment variables or in
+code before constructing the `Pca9685Driver` object.  The name of the debugging
+stream produced by the library is `pca9685`.See the debug library documentation
+for more information.
 
+
+## TypeScript
+
+This project is written in [TypeScript](http://www.typescriptlang.org/).  The
+library can be used by plain JavaScript as shown above, and the typing
+information is also included with the library so that anyone wishing to use
+Typescript will gain the benefits of the type information.
 
 ## Acknowledgements
 
