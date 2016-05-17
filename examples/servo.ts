@@ -12,6 +12,8 @@ import * as i2cBus from "i2c-bus";
 
 import Pca9685Driver from "../";
 
+
+// PCA9685 options
 const options =
 {
     i2c: i2cBus.openSync(1),
@@ -20,6 +22,7 @@ const options =
     debug: true
 };
 
+
 // pulse lengths in microseconds (theoretically, 1.5 ms
 // is the middle of a typical servo's range)
 const pulseLengths: number[] = [ 1300, 1500, 1700 ];
@@ -27,13 +30,13 @@ const steeringChannel: number = 0;
 
 
 // variables used in servoLoop
-var pwm: Pca9685Driver;
-var nextPulse: number = 0;
-var timer: NodeJS.Timer;
+let pwm: Pca9685Driver;
+let nextPulse: number = 0;
+let timer: NodeJS.Timer;
 
 
 // loop to cycle through pulse lengths
-function servoLoop() {
+function servoLoop(): void {
     timer = setTimeout(servoLoop, 500);
 
     pwm.setPulseLength(steeringChannel, pulseLengths[nextPulse]);
@@ -42,7 +45,7 @@ function servoLoop() {
 
 
 // set-up CTRL-C with graceful shutdown
-process.on('SIGINT', function () {
+process.on("SIGINT", () => {
     console.log("\nGracefully shutting down from SIGINT (Ctrl-C)");
 
     if (timer) {
@@ -55,7 +58,7 @@ process.on('SIGINT', function () {
 
 
 // initialize PCA9685 and start loop once initialized
-pwm = new Pca9685Driver(options, function startLoop(err: any) {
+pwm = new Pca9685Driver(options, function startLoop(err: any): void {
     if (err) {
         console.error("Error initializing PCA9685");
         process.exit(-1);
