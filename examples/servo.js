@@ -1,43 +1,44 @@
 /*
- * examples/servo.ts
+ * examples/servo.js
  * https://github.com/101100/pca9685
  *
  * Example to turn a servo motor in a loop.
- * Typescript version.
+ * Javascript version.
  *
  * Copyright (c) 2015 Jason Heard
  * Licensed under the MIT license.
  */
 
-import * as i2cBus from "i2c-bus";
+"use strict";
 
-import Pca9685Driver from "../";
+var i2cBus = require("i2c-bus");
+
+var Pca9685Driver = require("../").Pca9685Driver;
 
 
 // PCA9685 options
-const options =
-{
+var options = {
     i2c: i2cBus.openSync(1),
-    address: 0x40, // default value
-    frequency: 50, // default value
+    address: 0x40,
+    frequency: 50,
     debug: true
 };
 
 
 // pulse lengths in microseconds (theoretically, 1.5 ms
 // is the middle of a typical servo's range)
-const pulseLengths: number[] = [ 1300, 1500, 1700 ];
-const steeringChannel: number = 0;
+var pulseLengths = [1300, 1500, 1700];
+var steeringChannel = 0;
 
 
 // variables used in servoLoop
-let pwm: Pca9685Driver;
-let nextPulse: number = 0;
-let timer: NodeJS.Timer;
+var pwm;
+var nextPulse = 0;
+var timer;
 
 
 // loop to cycle through pulse lengths
-function servoLoop(): void {
+function servoLoop() {
     timer = setTimeout(servoLoop, 500);
 
     pwm.setPulseLength(steeringChannel, pulseLengths[nextPulse]);
@@ -46,7 +47,7 @@ function servoLoop(): void {
 
 
 // set-up CTRL-C with graceful shutdown
-process.on("SIGINT", () => {
+process.on("SIGINT", function () {
     console.log("\nGracefully shutting down from SIGINT (Ctrl-C)");
 
     if (timer) {
@@ -59,7 +60,7 @@ process.on("SIGINT", () => {
 
 
 // initialize PCA9685 and start loop once initialized
-pwm = new Pca9685Driver(options, function startLoop(err: any): void {
+pwm = new Pca9685Driver(options, function startLoop(err) {
     if (err) {
         console.error("Error initializing PCA9685");
         process.exit(-1);

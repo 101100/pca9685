@@ -1,6 +1,3 @@
-/*jslint bitwise: true */
-/// <reference path = "../typings/tsd.d.ts" />
-
 /*
  * src/pca9685.ts
  * https://github.com/101100/pca9685
@@ -10,8 +7,6 @@
  * Copyright (c) 2015 Jason Heard
  * Licensed under the MIT license.
  */
-
-"use strict";
 
 import * as debugFactory from "debug";
 import { I2cBus } from "i2c-bus";
@@ -42,16 +37,16 @@ const constants = {
 
 
 function createSetFrequencyStep2(sendFunc: (cmd: number, values: number) => void, debug: debugFactory.Debugger, prescale: number, cb: (error?: any) => void): (err: any, byte: number) => void {
-    cb = typeof cb === "function" ? cb : function () { return; };
+    cb = typeof cb === "function" ? cb : () => { return; };
 
-    return function setFrequencyStep2(err: any, byte: number) {
+    return function setFrequencyStep2(err: any, byte: number): void {
         if (err) {
             debug("Error reading mode (to set frequency)", err);
             cb(err);
         }
 
-        var oldmode = byte,
-            newmode = (oldmode & ~constants.restartBit) | constants.sleepBit;
+        const oldmode = byte;
+        const newmode = (oldmode & ~constants.restartBit) | constants.sleepBit;
 
         debug("Setting prescale to: %d", prescale);
 
@@ -62,7 +57,7 @@ function createSetFrequencyStep2(sendFunc: (cmd: number, values: number) => void
         // documentation says that 500 microseconds are required
         // before restart is sent, so a timeout of 10 milliseconds
         // should be plenty
-        setTimeout(function () {
+        setTimeout(() => {
             debug("Restarting controller");
 
             sendFunc(constants.modeRegister1, oldmode | constants.restartBit);
@@ -79,7 +74,7 @@ export interface Pca9685Options {
      * driver.
      * @type {I2cBus}
      */
-    i2c: I2cBus,
+    i2c: I2cBus;
 
     /**
      * The I2C address of the PCA9685 driver.  If not specified, the
@@ -87,14 +82,14 @@ export interface Pca9685Options {
      *
      * @type {number}
      */
-    address?: number,
+    address?: number;
 
     /**
      * Determines if debugging messages should be printed to the console.
      *
      * @type {boolean}
      */
-    debug?: boolean,
+    debug?: boolean;
 
     /**
      * The frequency that should be used for the PCA9685 driver.  If not
@@ -102,7 +97,7 @@ export interface Pca9685Options {
      *
      * @type {number}
      */
-    frequency: number
+    frequency: number;
 }
 
 
@@ -172,7 +167,7 @@ export class Pca9685Driver {
     setPulseLength(channel: number, pulseLengthMicroSeconds: number, onStep: number = 0): void {
         this.debug("Setting PWM channel, channel: %d, pulseLength: %d, onStep: %d", channel, pulseLengthMicroSeconds, onStep);
 
-        var offStep = (onStep + Math.round(pulseLengthMicroSeconds / this.stepLengthMicroSeconds) - 1) % constants.stepsPerCycle;
+        const offStep = (onStep + Math.round(pulseLengthMicroSeconds / this.stepLengthMicroSeconds) - 1) % constants.stepsPerCycle;
 
         this.setPulseRange(channel, onStep, offStep);
     }
@@ -192,7 +187,7 @@ export class Pca9685Driver {
     setDutyCycle(channel: number, dutyCycleDecimalPercentage: number, onStep: number = 0): void {
         this.debug("Setting PWM channel, channel: %d, dutyCycle: %f, onStep: %d", channel, dutyCycleDecimalPercentage, onStep);
 
-        var offStep = (onStep + Math.round(dutyCycleDecimalPercentage * constants.stepsPerCycle) - 1) % constants.stepsPerCycle;
+        const offStep = (onStep + Math.round(dutyCycleDecimalPercentage * constants.stepsPerCycle) - 1) % constants.stepsPerCycle;
 
         this.setPulseRange(channel, onStep, offStep);
     }
@@ -207,7 +202,7 @@ export class Pca9685Driver {
     }
 
 
-    private setFrequency(freq: number, cb: (error?: any) => void) {
+    private setFrequency(freq: number, cb: (error?: any) => void): void {
         // 25MHz base clock, 12 bit (4096 steps per cycle)
         let prescale = Math.round(constants.baseClockHertz / (constants.stepsPerCycle * freq)) - 1;
 
@@ -218,8 +213,8 @@ export class Pca9685Driver {
     }
 
 
-    private send(cmd: number, byte: number) {
-        this.i2c.writeByte(this.address, cmd, byte, function (err?: any) {
+    private send(cmd: number, byte: number): void {
+        this.i2c.writeByte(this.address, cmd, byte, (err: any) => {
             if (err) {
                 console.log("Error writing to PCA8685 via I2C", err);
             }
