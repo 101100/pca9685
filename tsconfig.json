@@ -8,8 +8,7 @@
     "noImplicitReturns": true,
     "outDir": "dist",
     "removeComments": false,
-    "sourceMap": false,
-    "target": "es5"
+    "sourceMap": false
   },
   "exclude": [
     "dist",
