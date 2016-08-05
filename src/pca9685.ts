@@ -28,6 +28,7 @@ const constants = {
     allChannelsOnStepHighByte: 0xFB, // ALL_LED_ON_H
     allChannelsOffStepLowByte: 0xFC, // ALL_LED_OFF_L
     allChannelsOffStepHighByte: 0xFD, // ALL_LED_OFF_H
+    turnOffChannel: 0x10, // must be sent to the off step high byte
     preScale: 0xFE, // PRE_SCALE
     stepsPerCycle: 4096,
     defaultAddress: 0x40,
@@ -197,8 +198,8 @@ export class Pca9685Driver {
      * Turns all channels off.
      */
     allChannelsOff(): void {
-        // Setting the high byte to 1 will turn off the channel
-        this.send(constants.allChannelsOffStepHighByte, 0x01);
+        // Setting the high byte to 0x10 will turn off all channels
+        this.send(constants.allChannelsOffStepHighByte, constants.turnOffChannel);
     }
 
 
