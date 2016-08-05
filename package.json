@@ -1,6 +1,6 @@
 {
   "name": "pca9685",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "homepage": "https://github.com/101100/pca9685",
   "description": "PCA9685 I2C 16-channel PWM/servo driver module",
   "author": {
