@@ -33,7 +33,7 @@ const steeringChannel: number = 0;
 // variables used in servoLoop
 let pwm: Pca9685Driver;
 let nextPulse: number = 0;
-let timer: NodeJS.Timer;
+let timer: NodeJS.Timer | null;
 
 
 // loop to cycle through pulse lengths
