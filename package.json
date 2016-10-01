@@ -35,10 +35,10 @@
     "node": ">= 0.10.0"
   },
   "devDependencies": {
-    "i2c-bus": "^1.0",
-    "tslint": "^3.10",
-    "typescript": "^1.8",
-    "typings": "^1.0"
+    "i2c-bus": "^1.1",
+    "tslint": "^3.15",
+    "typescript": "^2.0",
+    "typings": "^1.4"
   },
   "dependencies": {
     "debug": "^2.2"
