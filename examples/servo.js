@@ -5,7 +5,7 @@
  * Example to turn a servo motor in a loop.
  * Javascript version.
  *
- * Copyright (c) 2015 Jason Heard
+ * Copyright (c) 2015-2016 Jason Heard
  * Licensed under the MIT license.
  */
 

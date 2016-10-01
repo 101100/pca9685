@@ -4,7 +4,7 @@
  *
  * Library for PCA9685 I2C 16-channel PWM/servo driver.
  *
- * Copyright (c) 2015 Jason Heard
+ * Copyright (c) 2015-2016 Jason Heard
  * Licensed under the MIT license.
  */
 
