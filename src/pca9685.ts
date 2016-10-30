@@ -37,7 +37,7 @@ const constants = {
 };
 
 
-function createSetFrequencyStep2(sendFunc: (cmd: number, values: number) => void, debug: debugFactory.Debugger, prescale: number, cb: (error?: any) => void): (err: any, byte: number) => void {
+function createSetFrequencyStep2(sendFunc: (cmd: number, values: number) => void, debug: debugFactory.IDebugger, prescale: number, cb: (error?: any) => void): (err: any, byte: number) => void {
     cb = typeof cb === "function" ? cb : () => { return; };
 
     return function setFrequencyStep2(err: any, byte: number): void {
@@ -224,7 +224,7 @@ export class Pca9685Driver {
 
 
     private address: number;
-    private debug: debugFactory.Debugger;
+    private debug: debugFactory.IDebugger;
     private frequency: number;
     private i2c: I2cBus;
     private stepLengthMicroSeconds: number;
