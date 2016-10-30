@@ -5,7 +5,7 @@
  * Example to turn a servo motor in a loop.
  * Typescript version.
  *
- * Copyright (c) 2015 Jason Heard
+ * Copyright (c) 2015-2016 Jason Heard
  * Licensed under the MIT license.
  */
 
@@ -33,7 +33,7 @@ const steeringChannel: number = 0;
 // variables used in servoLoop
 let pwm: Pca9685Driver;
 let nextPulse: number = 0;
-let timer: NodeJS.Timer;
+let timer: NodeJS.Timer | null;
 
 
 // loop to cycle through pulse lengths
