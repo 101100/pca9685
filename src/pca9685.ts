@@ -32,7 +32,7 @@ const constants = {
     allChannelsOnStepHighByte: 0xFB, // ALL_LED_ON_H
     allChannelsOffStepLowByte: 0xFC, // ALL_LED_OFF_L
     allChannelsOffStepHighByte: 0xFD, // ALL_LED_OFF_H
-    turnOffChannel: 0x10, // must be sent to the off step high byte
+    channelFullOnOrOff: 0x10, // must be sent to the off step high byte
     preScale: 0xFE, // PRE_SCALE
     stepsPerCycle: 4096,
     defaultAddress: 0x40,
@@ -186,6 +186,11 @@ export class Pca9685Driver {
     setPulseLength(channel: number, pulseLengthMicroSeconds: number, onStep: number = 0, callback?: (error: any) => any): void {
         this.debug("Setting PWM channel, channel: %d, pulseLength: %d, onStep: %d", channel, pulseLengthMicroSeconds, onStep);
 
+        if (pulseLengthMicroSeconds <= 0.0) {
+            this.channelOff(channel, callback);
+            return;
+        }
+
         const offStep = (onStep + Math.round(pulseLengthMicroSeconds / this.stepLengthMicroSeconds) - 1) % constants.stepsPerCycle;
 
         this.setPulseRange(channel, onStep, offStep, callback);
@@ -233,7 +238,7 @@ export class Pca9685Driver {
 
         // Setting the high byte of the all channel off step to 0x10 will turn
         // off all channels.
-        this.send(constants.allChannelsOffStepHighByte, constants.turnOffChannel, callback);
+        this.send(constants.allChannelsOffStepHighByte, constants.channelFullOnOrOff, callback);
     }
 
 
@@ -249,7 +254,7 @@ export class Pca9685Driver {
         this.debug("Turning off channel: %d", channel);
 
         // Setting the high byte of the off step to 0x10 will turn off the channel.
-        this.send(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, constants.turnOffChannel, callback);
+        this.send(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, constants.channelFullOnOrOff, callback);
     }
 
 
@@ -266,7 +271,7 @@ export class Pca9685Driver {
 
         // Setting the high byte of the on step to 0x10 will turn on the channel
         // as long as the high byte of the off step does not have the bit 0x10 set.
-        this.send(constants.channel0OnStepHighByte + constants.registersPerChannel * channel, constants.turnOffChannel);
+        this.send(constants.channel0OnStepHighByte + constants.registersPerChannel * channel, constants.channelFullOnOrOff);
         this.send(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, 0, callback);
     }
 
