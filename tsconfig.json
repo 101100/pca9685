@@ -8,6 +8,7 @@
     "noImplicitReturns": true,
     "outDir": "dist",
     "removeComments": false,
+    "skipLibCheck": true,
     "sourceMap": false,
     "strictNullChecks": true
   },
