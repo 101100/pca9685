@@ -36,6 +36,15 @@ pwm.setPulseLength(2, 1500);
 
 // Set the duty cycle to 25% for channel 8
 pwm.setDutyCycle(8, 0.25);
+
+// Turn off all power to channel 6
+// (with optional callback)
+pwm.channelOff(6, function() {
+    console.log("Channel 6 is off.");
+});
+
+// Turn on channel 3
+pwm.channelOn(3);
 ```
 
 Note that you need to construct the [`i2c-bus`](https://npmjs.org/package/i2c-bus)

@@ -208,6 +208,14 @@ export class Pca9685Driver {
     setDutyCycle(channel: number, dutyCycleDecimalPercentage: number, onStep: number = 0, callback?: (error: any) => any): void {
         this.debug("Setting PWM channel, channel: %d, dutyCycle: %f, onStep: %d", channel, dutyCycleDecimalPercentage, onStep);
 
+        if (dutyCycleDecimalPercentage <= 0.0) {
+            this.channelOff(channel, callback);
+            return;
+        } else if (dutyCycleDecimalPercentage >= 1.0) {
+            this.channelOn(channel, callback);
+            return;
+        }
+
         const offStep = (onStep + Math.round(dutyCycleDecimalPercentage * constants.stepsPerCycle) - 1) % constants.stepsPerCycle;
 
         this.setPulseRange(channel, onStep, offStep, callback);
@@ -221,8 +229,45 @@ export class Pca9685Driver {
      *     Optional callback called once all of the channels have been turned off.
      */
     allChannelsOff(callback?: (error: any) => any): void {
-        // Setting the high byte to 0x10 will turn off all channels
+        this.debug("Turning off all channels");
+
+        // Setting the high byte of the all channel off step to 0x10 will turn
+        // off all channels.
         this.send(constants.allChannelsOffStepHighByte, constants.turnOffChannel, callback);
+    }
+
+
+    /**
+     * Turns off the given channel.
+     *
+     * @param channel
+     *     Output channel to turn off.
+     * @param callback
+     *     Optional callback called once the channel has been turned off.
+     */
+    channelOff(channel: number, callback?: (error: any) => any): void {
+        this.debug("Turning off channel: %d", channel);
+
+        // Setting the high byte of the off step to 0x10 will turn off the channel.
+        this.send(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, constants.turnOffChannel, callback);
+    }
+
+
+    /**
+     * Turns on the given channel.
+     *
+     * @param channel
+     *     Output channel to turn on.
+     * @param callback
+     *     Optional callback called once the channel has been turned on.
+     */
+    channelOn(channel: number, callback?: (error: any) => any): void {
+        this.debug("Turning on channel: %d", channel);
+
+        // Setting the high byte of the on step to 0x10 will turn on the channel
+        // as long as the high byte of the off step does not have the bit 0x10 set.
+        this.send(constants.channel0OnStepHighByte + constants.registersPerChannel * channel, constants.turnOffChannel);
+        this.send(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, 0, callback);
     }
 
 
