@@ -13,7 +13,7 @@ import { I2cBus } from "i2c-bus";
 import { Observable } from "rxjs/Observable";
 import { Subject } from "rxjs/Subject";
 import { Subscriber } from "rxjs/Subscriber";
-import "rxjs/add/operator/mergeMap";
+import "rxjs/add/operator/concatMap";
 
 
 const constants = {
@@ -109,7 +109,7 @@ export class Pca9685Driver {
 
         // create a stream that will send each command in sequence using the async writeByte command
         this.commandSubject
-            .flatMap(packet => {
+            .concatMap(packet => {
                 return new Observable<void>((subscriber: Subscriber<void>) => {
                     this.i2c.writeByte(this.address, packet.command, packet.byte, (err: any) => {
                         if (packet.callback) {
