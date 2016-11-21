@@ -152,7 +152,7 @@ export class Pca9685Driver {
      * Sets the on and off steps for the given channel.
      *
      * @param channel
-     *     Output hannel to configure.
+     *     Output channel to configure.
      * @param onStep
      *     The step number when the channel should turn on.
      * @param offStep
@@ -174,7 +174,7 @@ export class Pca9685Driver {
      * Sets the pulse length for the given channel.
      *
      * @param channel
-     *     Output hannel to configure.
+     *     Output channel to configure.
      * @param pulseLengthMicroSeconds
      *     The length of the pulse for the given channel in microseconds.
      * @param onStep
@@ -196,7 +196,7 @@ export class Pca9685Driver {
      * Sets the duty cycle for the given channel.
      *
      * @param channel
-     *     Output hannel to configure.
+     *     Output channel to configure.
      * @param dutyCycleDecimalPercentage
      *     The duty cycle for the given channel as a decimal percentage.
      * @param onStep
