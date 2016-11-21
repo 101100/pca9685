@@ -70,33 +70,27 @@ function createSetFrequencyStep2(sendFunc: (cmd: number, values: number) => void
 
 
 export interface Pca9685Options {
-    /**
-     * An opne I2cBus object to be used to communicate with the PCA9685
-     * driver.
-     * @type {I2cBus}
-     */
+    /** An open I2cBus object to be used to communicate with the PCA9685 driver. */
     i2c: I2cBus;
 
     /**
-     * The I2C address of the PCA9685 driver.  If not specified, the
-     * default address of 0x40 will be used.
+     * The I2C address of the PCA9685 driver.
      *
-     * @type {number}
+     * If not specified, the default address of 0x40 will be used.
+     *
+     * @default 0x40
      */
     address?: number;
 
-    /**
-     * Determines if debugging messages should be printed to the console.
-     *
-     * @type {boolean}
-     */
+    /** If truthy, will configure debugging messages to be printed to the console. */
     debug?: boolean;
 
     /**
-     * The frequency that should be used for the PCA9685 driver.  If not
-     * specified, the default frequency of 50 Hz will be used.
+     * The frequency that should be used for the PCA9685 driver.
      *
-     * @type {number}
+     * If not specified, the default frequency of 50 Hz will be used.
+     *
+     * @default 50
      */
     frequency: number;
 }
@@ -105,12 +99,14 @@ export interface Pca9685Options {
 export class Pca9685Driver {
 
     /**
-     * Constructs a
+     * Constructs a new PCA9685 driver.
      *
-     * @param {Pca9685Options}
-     * @param {any)        => any}
+     * @param options
+     *     Configuration options for the driver.
+     * @param callback
+     *     Callback called once the driver has been initialized.
      */
-    constructor(options: Pca9685Options, cb: (error: any) => any) {
+    constructor(options: Pca9685Options, callback: (error: any) => any) {
         if (options.debug) {
             debugFactory.enable("pca9685");
         }
@@ -137,11 +133,11 @@ export class Pca9685Driver {
     /**
      * Sets the on and off steps for the given channel.
      *
-     * @param {number} channel
+     * @param channel
      *     Output hannel to configure.
-     * @param {number} onStep
+     * @param onStep
      *     The step number when the channel should turn on.
-     * @param {number} offStep
+     * @param offStep
      *     The step number when the channel should turn off.
      */
     setPulseRange(channel: number, onStep: number, offStep: number): void {
@@ -157,11 +153,11 @@ export class Pca9685Driver {
     /**
      * Sets the pulse length for the given channel.
      *
-     * @param {number} channel
+     * @param channel
      *     Output hannel to configure.
-     * @param {number} pulseLengthMicroSeconds
+     * @param pulseLengthMicroSeconds
      *     The length of the pulse for the given channel in microseconds.
-     * @param {number} onStep
+     * @param onStep
      *     Optional The step number when the channel should turn on (defaults
      *     to 0).
      */
@@ -177,11 +173,11 @@ export class Pca9685Driver {
     /**
      * Sets the duty cycle for the given channel.
      *
-     * @param {number} channel
+     * @param channel
      *     Output hannel to configure.
-     * @param {number} dutyCycleDecimalPercentage
+     * @param dutyCycleDecimalPercentage
      *     The duty cycle for the given channel as a decimal percentage.
-     * @param {number} onStep
+     * @param onStep
      *     Optional The step number when the channel should turn on (defaults
      *     to 0).
      */
