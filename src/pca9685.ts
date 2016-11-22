@@ -68,17 +68,29 @@ export interface Pca9685Options {
 }
 
 
-interface I2cPacket {
+interface I2cPacketGroup {
 
-    /** The command code. */
-    command: number;
+    /** The packets to send. */
+    packets: {
 
-    /** The data byte to write. */
-    byte: number;
+        /** The command code. */
+        command: number;
 
-    /** An optional callback to call once the packet has been sent or if there is an error. */
-    callback?: (error: any) => any;
+        /** The data byte to write. */
+        byte: number;
 
+    }[];
+
+    /** A callback to call after the packets have been sent or an error occurs. */
+    callback: (error?: any) => any;
+
+}
+
+
+function defaultCallback(err: any): void {
+    if (err) {
+        console.log("Error writing to PCA8685 via I2C", err);
+    }
 }
 
 
@@ -99,7 +111,7 @@ export class Pca9685Driver {
 
         this.i2c = options.i2c;
         this.address = options.address || constants.defaultAddress;
-        this.commandSubject = new Subject<I2cPacket>();
+        this.commandSubject = new Subject<I2cPacketGroup>();
         this.debug = debugFactory("pca9685");
         this.frequency = options.frequency || constants.defaultFrequency;
         const cycleLengthMicroSeconds = 1000000 / this.frequency;
@@ -107,22 +119,37 @@ export class Pca9685Driver {
 
         this.send = this.send.bind(this);
 
-        // create a stream that will send each command in sequence using the async writeByte command
-        this.commandSubject
-            .concatMap(packet => {
-                return new Observable<void>((subscriber: Subscriber<void>) => {
-                    this.i2c.writeByte(this.address, packet.command, packet.byte, (err: any) => {
-                        if (packet.callback) {
-                            packet.callback(err);
-                        }
-                        // print error message if no callback to handle error
-                        if (err && !packet.callback) {
-                            console.log("Error writing to PCA8685 via I2C", err);
-                        }
+        const sendOnePacket = (command: number, byte: number, sendCallback: (error: any) => any) => {
+            this.i2c.writeByte(this.address, command, byte, sendCallback);
+        };
 
-                        // either way, complete the stream so that the next I2C packet can be sent
-                        subscriber.complete();
-                    });
+        // create a stream that will send each packet group in sequence using the async writeByte command
+        this.commandSubject
+            .concatMap(group => {
+                return new Observable<void>((subscriber: Subscriber<void>) => {
+                    let nextPacket = 0;
+
+                    function sendNextPacket(err?: any): void {
+                        if (err) {
+                            // notify the callback of the error
+                            callback(err);
+
+                            // complete the stream so that the next I2C packet group can be sent
+                            subscriber.complete();
+                        } else if (nextPacket < group.packets.length) {
+                            const thisPacket = nextPacket;
+                            nextPacket += 1;
+                            sendOnePacket(group.packets[thisPacket].command, group.packets[thisPacket].byte, sendNextPacket);
+                        } else {
+                            // notify the callback with a success (no error parameter)
+                            group.callback();
+
+                            // complete the stream so that the next I2C packet group can be sent
+                            subscriber.complete();
+                        }
+                    }
+
+                    sendNextPacket();
                 });
             })
             .subscribe();
@@ -130,10 +157,21 @@ export class Pca9685Driver {
         this.debug("Reseting PCA9685");
 
         // queue initialization packets
-        this.send(constants.modeRegister1, constants.modeRegister1Default);
-        this.send(constants.modeRegister2, constants.modeRegister2Default);
-        this.allChannelsOff(() => {
-            this.setFrequency(this.frequency, callback);
+        this.send([
+            { command: constants.modeRegister1, byte: constants.modeRegister1Default },
+            { command: constants.modeRegister2, byte: constants.modeRegister2Default }
+        ], sendError => {
+            if (sendError) {
+                callback(sendError);
+            } else {
+                this.allChannelsOff(offError => {
+                    if (offError) {
+                        callback(offError);
+                    } else {
+                        this.setFrequency(this.frequency, callback);
+                    }
+                });
+            }
         });
     }
 
@@ -163,10 +201,12 @@ export class Pca9685Driver {
     setPulseRange(channel: number, onStep: number, offStep: number, callback?: (error: any) => any): void {
         this.debug("Setting PWM channel, channel: %d, onStep: %d, offStep: %d", channel, onStep, offStep);
 
-        this.send(constants.channel0OnStepLowByte + constants.registersPerChannel * channel, onStep & 0xFF);
-        this.send(constants.channel0OnStepHighByte + constants.registersPerChannel * channel, (onStep >> 8) & 0x0F);
-        this.send(constants.channel0OffStepLowByte + constants.registersPerChannel * channel, offStep & 0xFF);
-        this.send(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, (offStep >> 8) & 0x0F, callback);
+        this.send([
+            { command: constants.channel0OnStepLowByte + constants.registersPerChannel * channel, byte: onStep & 0xFF },
+            { command: constants.channel0OnStepHighByte + constants.registersPerChannel * channel, byte: (onStep >> 8) & 0x0F },
+            { command: constants.channel0OffStepLowByte + constants.registersPerChannel * channel, byte: offStep & 0xFF },
+            { command: constants.channel0OffStepHighByte + constants.registersPerChannel * channel, byte: (offStep >> 8) & 0x0F }
+        ], callback || defaultCallback);
     }
 
 
@@ -238,7 +278,7 @@ export class Pca9685Driver {
 
         // Setting the high byte of the all channel off step to 0x10 will turn
         // off all channels.
-        this.send(constants.allChannelsOffStepHighByte, constants.channelFullOnOrOff, callback);
+        this.send([ { command: constants.allChannelsOffStepHighByte, byte: constants.channelFullOnOrOff } ], callback || defaultCallback);
     }
 
 
@@ -254,7 +294,7 @@ export class Pca9685Driver {
         this.debug("Turning off channel: %d", channel);
 
         // Setting the high byte of the off step to 0x10 will turn off the channel.
-        this.send(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, constants.channelFullOnOrOff, callback);
+        this.send([ { command: constants.channel0OffStepHighByte + constants.registersPerChannel * channel, byte: constants.channelFullOnOrOff } ], callback || defaultCallback);
     }
 
 
@@ -271,8 +311,10 @@ export class Pca9685Driver {
 
         // Setting the high byte of the on step to 0x10 will turn on the channel
         // as long as the high byte of the off step does not have the bit 0x10 set.
-        this.send(constants.channel0OnStepHighByte + constants.registersPerChannel * channel, constants.channelFullOnOrOff);
-        this.send(constants.channel0OffStepHighByte + constants.registersPerChannel * channel, 0, callback);
+        this.send([
+            { command: constants.channel0OnStepHighByte + constants.registersPerChannel * channel, byte: constants.channelFullOnOrOff },
+            { command: constants.channel0OffStepHighByte + constants.registersPerChannel * channel, byte: 0 }
+        ], callback || defaultCallback);
     }
 
 
@@ -288,21 +330,19 @@ export class Pca9685Driver {
 
 
     /**
-     * Queue the given command and byte to be sent to the PCA9685 over the I2C bus.
+     * Queue the given I2C packets to be sent to the PCA9685 over the I2C bus.
      *
-     * @param command
-     *     The I2C command code.
-     * @param byte
-     *     The byte to send.
      * @param callback
-     *     Optional callback called once the byte has been sent.
+     *     Callback called once the packets have been sent or an error occurs.
+     * @param packets
+     *     The I2C packets to send.
      */
-    private send(command: number, byte: number, callback?: (error: any) => any): void {
-        this.commandSubject.next({ command, byte, callback });
+    private send(packets: { command: number, byte: number}[], callback: (error: any) => any): void {
+        this.commandSubject.next({ packets, callback });
     }
 
 
-    private static createSetFrequencyStep2(sendFunc: (cmd: number, values: number, callback?: (error: any) => any) => void, debug: debugFactory.IDebugger, prescale: number, callback: (error?: any) => void): (err: any, byte: number) => void {
+    private static createSetFrequencyStep2(sendFunc: (packets: { command: number, byte: number}[], callback: (error: any) => any) => void, debug: debugFactory.IDebugger, prescale: number, callback: (error?: any) => void): (err: any, byte: number) => void {
         callback = typeof callback === "function" ? callback : () => { return; };
 
         return function setFrequencyStep2(err: any, byte: number): void {
@@ -316,24 +356,30 @@ export class Pca9685Driver {
 
             debug("Setting prescale to: %d", prescale);
 
-            sendFunc(constants.modeRegister1, newmode);
-            sendFunc(constants.preScale, Math.floor(prescale));
-            sendFunc(constants.modeRegister1, oldmode);
+            sendFunc([
+                { command: constants.modeRegister1, byte: newmode },
+                { command: constants.preScale, byte: Math.floor(prescale) },
+                { command: constants.modeRegister1, byte: oldmode }
+            ], sendError => {
+                if (sendError) {
+                    callback(sendError);
+                } else {
+                    // documentation says that 500 microseconds are required
+                    // before restart is sent, so a timeout of 10 milliseconds
+                    // should be plenty
+                    setTimeout(() => {
+                        debug("Restarting controller");
 
-            // documentation says that 500 microseconds are required
-            // before restart is sent, so a timeout of 10 milliseconds
-            // should be plenty
-            setTimeout(() => {
-                debug("Restarting controller");
-
-                sendFunc(constants.modeRegister1, oldmode | constants.restartBit, callback);
-            }, 10);
+                        sendFunc([ { command: constants.modeRegister1, byte: oldmode | constants.restartBit } ], callback);
+                    }, 10);
+                }
+            });
         };
     }
 
 
     private address: number;
-    private commandSubject: Subject<I2cPacket>;
+    private commandSubject: Subject<I2cPacketGroup>;
     private debug: debugFactory.IDebugger;
     private frequency: number;
     private i2c: I2cBus;
