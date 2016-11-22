@@ -211,7 +211,7 @@ export class Pca9685Driver {
      *     Optional callback called once the duty cycle has been set for the given channel.
      */
     setDutyCycle(channel: number, dutyCycleDecimalPercentage: number, onStep: number = 0, callback?: (error: any) => any): void {
-        this.debug("Setting PWM channel, channel: %d, dutyCycle: %f, onStep: %d", channel, dutyCycleDecimalPercentage, onStep);
+        this.debug("Setting PWM channel, channel: %d, dutyCycle: %d, onStep: %d", channel, dutyCycleDecimalPercentage, onStep);
 
         if (dutyCycleDecimalPercentage <= 0.0) {
             this.channelOff(channel, callback);
