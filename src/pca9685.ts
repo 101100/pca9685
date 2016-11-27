@@ -105,6 +105,16 @@ export class Pca9685Driver {
      *     Callback called once the driver has been initialized.
      */
     constructor(options: Pca9685Options, callback: (error: any) => any) {
+        if (typeof options !== "object") {
+            throw new Error("options must be an object.");
+        }
+        if (!options.i2c) {
+            throw new Error("options.i2c must be specified.");
+        }
+        if (typeof callback !== "function") {
+            throw new Error("callback must be a function.");
+        }
+
         if (options.debug) {
             debugFactory.enable("pca9685");
         }
@@ -199,6 +209,16 @@ export class Pca9685Driver {
      *     Optional callback called once the  on and off steps has been set for the given channel.
      */
     setPulseRange(channel: number, onStep: number, offStep: number, callback?: (error: any) => any): void {
+        if (typeof channel !== "number" || channel < 0 || channel > 15) {
+            throw new Error("channel must be in the range 0 to 15.");
+        }
+        if (typeof onStep !== "number" || onStep < 0 || onStep > 0xFFF) {
+            throw new Error("onStep must be in the range 0 to 4095 (0xFFF).");
+        }
+        if (typeof offStep !== "number" || offStep < 0 || offStep > 0xFFF) {
+            throw new Error("offStep must be in the range 0 to 4095 (0xFFF).");
+        }
+
         this.debug("Setting PWM channel, channel: %d, onStep: %d, offStep: %d", channel, onStep, offStep);
 
         this.send([
@@ -224,6 +244,16 @@ export class Pca9685Driver {
      *     Optional callback called once the pulse length has been set for the given channel.
      */
     setPulseLength(channel: number, pulseLengthMicroSeconds: number, onStep: number = 0, callback?: (error: any) => any): void {
+        if (typeof channel !== "number" || channel < 0 || channel > 15) {
+            throw new Error("Channel must be in the range 0 to 15.");
+        }
+        if (typeof pulseLengthMicroSeconds !== "number") {
+            throw new Error("pulseLengthMicroSeconds must be a number.");
+        }
+        if (onStep && (typeof onStep !== "number" || onStep < 0 || onStep > 0xFFF)) {
+            throw new Error("onStep must be in the range 0 to 4095 (0xFFF).");
+        }
+
         this.debug("Setting PWM channel, channel: %d, pulseLength: %d, onStep: %d", channel, pulseLengthMicroSeconds, onStep);
 
         if (pulseLengthMicroSeconds <= 0.0) {
@@ -231,7 +261,14 @@ export class Pca9685Driver {
             return;
         }
 
-        const offStep = (onStep + Math.round(pulseLengthMicroSeconds / this.stepLengthMicroSeconds) - 1) % constants.stepsPerCycle;
+        const pulseLengthInSteps = Math.round(pulseLengthMicroSeconds / this.stepLengthMicroSeconds) - 1;
+
+        if (pulseLengthInSteps > 0xFFF) {
+            this.channelOn(channel, callback);
+            return;
+        }
+
+        const offStep = (onStep + pulseLengthInSteps) % constants.stepsPerCycle;
 
         this.setPulseRange(channel, onStep, offStep, callback);
     }
@@ -251,6 +288,16 @@ export class Pca9685Driver {
      *     Optional callback called once the duty cycle has been set for the given channel.
      */
     setDutyCycle(channel: number, dutyCycleDecimalPercentage: number, onStep: number = 0, callback?: (error: any) => any): void {
+        if (typeof channel !== "number" || channel < 0 || channel > 15) {
+            throw new Error("Channel must be in the range 0 to 15.");
+        }
+        if (typeof dutyCycleDecimalPercentage !== "number") {
+            throw new Error("dutyCycleDecimalPercentage must be a number.");
+        }
+        if (onStep && (typeof onStep !== "number" || onStep < 0 || onStep > 0xFFF)) {
+            throw new Error("onStep must be in the range 0 to 4095 (0xFFF).");
+        }
+
         this.debug("Setting PWM channel, channel: %d, dutyCycle: %d, onStep: %d", channel, dutyCycleDecimalPercentage, onStep);
 
         if (dutyCycleDecimalPercentage <= 0.0) {
@@ -291,6 +338,10 @@ export class Pca9685Driver {
      *     Optional callback called once the channel has been turned off.
      */
     channelOff(channel: number, callback?: (error: any) => any): void {
+        if (typeof channel !== "number" || channel < 0 || channel > 15) {
+            throw new Error("Channel must be in the range 0 to 15.");
+        }
+
         this.debug("Turning off channel: %d", channel);
 
         // Setting the high byte of the off step to 0x10 will turn off the channel.
@@ -307,6 +358,10 @@ export class Pca9685Driver {
      *     Optional callback called once the channel has been turned on.
      */
     channelOn(channel: number, callback?: (error: any) => any): void {
+        if (typeof channel !== "number" || channel < 0 || channel > 15) {
+            throw new Error("Channel must be in the range 0 to 15.");
+        }
+
         this.debug("Turning on channel: %d", channel);
 
         // Setting the high byte of the on step to 0x10 will turn on the channel
