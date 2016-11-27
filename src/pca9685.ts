@@ -64,7 +64,7 @@ export interface Pca9685Options {
      *
      * @default 50
      */
-    frequency: number;
+    frequency?: number;
 }
 
 
@@ -373,27 +373,35 @@ export class Pca9685Driver {
     }
 
 
-    private setFrequency(freq: number, callback: (error?: any) => void): void {
-        // 25MHz base clock, 12 bit (4096 steps per cycle)
-        let prescale = Math.round(constants.baseClockHertz / (constants.stepsPerCycle * freq)) - 1;
-
-        this.debug("Setting PWM frequency to %d Hz", freq);
-        this.debug("Pre-scale value: %d", prescale);
-
-        this.i2c.readByte(this.address, constants.modeRegister1, Pca9685Driver.createSetFrequencyStep2(this.send, this.debug, prescale, callback));
+    /**
+     * Queue the given I2C packets to be sent to the PCA9685 over the I2C bus.
+     *
+     * @param packets
+     *     The I2C packets to send.
+     * @param callback
+     *     Callback called once the packets have been sent or an error occurs.
+     */
+    private send(packets: { command: number, byte: number}[], callback: (error: any) => any): void {
+        this.commandSubject.next({ packets, callback });
     }
 
 
     /**
-     * Queue the given I2C packets to be sent to the PCA9685 over the I2C bus.
+     * Set the internal frequency of the PCA9685 to the given value.
      *
+     * @param frequency
+     *     The new frequency value.
      * @param callback
-     *     Callback called once the packets have been sent or an error occurs.
-     * @param packets
-     *     The I2C packets to send.
+     *     Callback called once the frequency has been sent or an error occurs.
      */
-    private send(packets: { command: number, byte: number}[], callback: (error: any) => any): void {
-        this.commandSubject.next({ packets, callback });
+    private setFrequency(frequency: number, callback: (error: any) => void): void {
+        // 25MHz base clock, 12 bit (4096 steps per cycle)
+        let prescale = Math.round(constants.baseClockHertz / (constants.stepsPerCycle * frequency)) - 1;
+
+        this.debug("Setting PWM frequency to %d Hz", frequency);
+        this.debug("Pre-scale value: %d", prescale);
+
+        this.i2c.readByte(this.address, constants.modeRegister1, Pca9685Driver.createSetFrequencyStep2(this.send, this.debug, prescale, callback));
     }
 
 
