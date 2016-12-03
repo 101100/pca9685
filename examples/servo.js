@@ -55,7 +55,7 @@ process.on("SIGINT", function () {
         timer = null;
     }
 
-    pwm.allChannelsOff();
+    pwm.dispose();
 });
 
 

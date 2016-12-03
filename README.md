@@ -21,18 +21,42 @@ var options = {
     frequency: 50,
     debug: false
 };
-pwm = new Pca9685Driver(options, function() {
+pwm = new Pca9685Driver(options, function(err) {
+    if (err) {
+        console.error("Error initializing PCA9685");
+        process.exit(-1);
+    }
     console.log("Initialization done");
+
+    // Set channel 0 to turn on on step 42 and off on step 255
+    // (with optional callback)
+    pwm.setPulseRange(0, 42, 255, function() {
+        if (err) {
+            console.error("Error setting pulse range.");
+        } else {
+            console.log("Pulse range set.");
+        }
+    });
+
+    // Set the pulse length to 1500 microseconds for channel 2
+    pwm.setPulseLength(2, 1500);
+
+    // Set the duty cycle to 25% for channel 8
+    pwm.setDutyCycle(8, 0.25);
+
+    // Turn off all power to channel 6
+    // (with optional callback)
+    pwm.channelOff(6, function() {
+        if (err) {
+            console.error("Error turning off channel.");
+        } else {
+            console.log("Channel 6 is off.");
+        }
+    });
+
+    // Turn on channel 3 (100% power)
+    pwm.channelOn(3);
 });
-
-// Set channel 0 to turn on on step 42 and off on step 255
-pwm.setPulseRange(0, 42, 255);
-
-// Set the pulse length to 1500 microseconds for channel 2
-pwm.setPulseLength(2, 1500);
-
-// Set the duty cycle to 25% for channel 8
-pwm.setDutyCycle(8, 0.25);
 ```
 
 Note that you need to construct the [`i2c-bus`](https://npmjs.org/package/i2c-bus)
@@ -44,9 +68,9 @@ PWM/servo driver.
 
 - `i2c`: The I2cBus object used to communicate to the PWM/servo driver.
 - `address`: The I2C address of the PCA9685 PWM/servo driver.
-- `frequency`: The frequency to use for the PWM/servo driver.  50 is
-standard for servos, but higher frequencies might work better for
-driving LEDs without obvious flicker.
+- `frequency`: The frequency to use for the PWM/servo driver. 50 is
+    standard for servos, but higher frequencies might work better for
+    driving LEDs without obvious flicker.
 - `debug`: If truthy, then debug messages will be printed on the console
 during operations.
 
@@ -66,6 +90,7 @@ This project is written in [TypeScript](http://www.typescriptlang.org/).  The
 library can be used by plain JavaScript as shown above, and the typing
 information is also included with the library so that anyone wishing to use
 Typescript will gain the benefits of the type information.
+
 
 ## Acknowledgements
 
