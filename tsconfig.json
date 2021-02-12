@@ -4,13 +4,11 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es5",
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
     "outDir": "dist",
     "removeComments": false,
     "skipLibCheck": true,
     "sourceMap": false,
-    "strictNullChecks": true
+    "strict": true
   },
   "exclude": [
     "dist",
