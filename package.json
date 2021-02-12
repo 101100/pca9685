@@ -29,7 +29,8 @@
   "scripts": {
     "build": "npm run lint && tsc",
     "lint": "tslint index.ts src/*.ts examples/*.ts",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "test": "npm run lint && tsc --noEmit"
   },
   "engines": {
     "node": ">=8.0.0"
