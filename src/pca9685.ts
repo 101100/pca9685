@@ -9,11 +9,9 @@
  */
 
 import * as debugFactory from "debug";
-import { I2cBus } from "i2c-bus";
-import { Observable } from "rxjs/Observable";
-import { Subject } from "rxjs/Subject";
-import { Subscriber } from "rxjs/Subscriber";
-import "rxjs/add/operator/concatMap";
+import { I2CBus } from "i2c-bus";
+import { Observable, Subject, Subscriber } from "rxjs";
+import { concatMap } from "rxjs/operators";
 
 
 const constants = {
@@ -42,8 +40,8 @@ const constants = {
 
 
 export interface Pca9685Options {
-    /** An open I2cBus object to be used to communicate with the PCA9685 driver. */
-    i2c: I2cBus;
+    /** An open I2CBus object to be used to communicate with the PCA9685 driver. */
+    i2c: I2CBus;
 
     /**
      * The I2C address of the PCA9685 driver.
@@ -135,33 +133,34 @@ export class Pca9685Driver {
 
         // create a stream that will send each packet group in sequence using the async writeByte command
         this.commandSubject
-            .concatMap(group => {
-                return new Observable<void>((subscriber: Subscriber<void>) => {
-                    let nextPacket = 0;
+            .pipe(
+                concatMap(group => {
+                    return new Observable<void>((subscriber: Subscriber<void>) => {
+                        let nextPacket = 0;
 
-                    function sendNextPacket(err?: any): void {
-                        if (err) {
-                            // notify the callback of the error
-                            callback(err);
+                        function sendNextPacket(err?: any): void {
+                            if (err) {
+                                // notify the callback of the error
+                                callback(err);
 
-                            // complete the stream so that the next I2C packet group can be sent
-                            subscriber.complete();
-                        } else if (nextPacket < group.packets.length) {
-                            const thisPacket = nextPacket;
-                            nextPacket += 1;
-                            sendOnePacket(group.packets[thisPacket].command, group.packets[thisPacket].byte, sendNextPacket);
-                        } else {
-                            // notify the callback with a success (no error parameter)
-                            group.callback();
+                                // complete the stream so that the next I2C packet group can be sent
+                                subscriber.complete();
+                            } else if (nextPacket < group.packets.length) {
+                                const thisPacket = nextPacket;
+                                nextPacket += 1;
+                                sendOnePacket(group.packets[thisPacket].command, group.packets[thisPacket].byte, sendNextPacket);
+                            } else {
+                                // notify the callback with a success (no error parameter)
+                                group.callback();
 
-                            // complete the stream so that the next I2C packet group can be sent
-                            subscriber.complete();
+                                // complete the stream so that the next I2C packet group can be sent
+                                subscriber.complete();
+                            }
                         }
-                    }
 
-                    sendNextPacket();
-                });
-            })
+                        sendNextPacket();
+                    });
+                }))
             .subscribe();
 
         this.debug("Reseting PCA9685");
@@ -445,7 +444,7 @@ export class Pca9685Driver {
     private commandSubject: Subject<I2cPacketGroup>;
     private debug: debugFactory.IDebugger;
     private frequency: number;
-    private i2c: I2cBus;
+    private i2c: I2CBus;
     private stepLengthMicroSeconds: number;
 
 }
